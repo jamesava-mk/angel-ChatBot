@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🤖 ChatBot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      margin: 0;
+      padding: 0;
+      color: white;
+    }
+
+    .chatbox {
+      width: 95%;
+      max-width: 600px;
+      margin: 20px auto;
+      background-color: #1a1a1a;
+      border: 2px solid #e60000;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(255,0,0,0.2);
+      padding: 20px;
+    }
+
+    h2 {
+      color: #e60000;
+      text-align: center;
+    }
+
+    #chat-history {
+      max-height: 60vh; /* Use screen height */
+      height: auto;
+      overflow-y: auto;
+      padding: 10px;
+      background-color: #222;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .message {
+      margin: 10px 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-msg {
+      align-self: flex-end;
+      background-color: #e60000;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 20px 20px 0 20px;
+      max-width: 75%;
+      text-align: right;
+      margin: 8px 0;
+    }
+
+    .bot-msg {
+      align-self: flex-start;
+      background-color: #333;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 20px 20px 20px 0;
+      max-width: 75%;
+      text-align: left;
+      margin: 8px 0;
+    }
+
+    .avatar {
+      width: 24px;
+      height: 24px;
+      margin-top: 5px;
+      opacity: 0.8;
+    }
+
+    .bot-avatar {
+      text-align: left;
+    }
+
+    .user-avatar {
+      text-align: right;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      width: 70%;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background-color: #222;
+      color: white;
+    }
+
+    #sendBtn {
+      padding: 10px 15px;
+      margin-left: 5px;
+      background-color: #e60000;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .quick-buttons {
+      margin-bottom: 15px;
+    }
+
+    .quick-buttons button {
+      background-color: #e60000;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 15px;
+      margin: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="chatbox">
+    <h2>🤖 ChatBot</h2>
+
+    <div class="quick-buttons">
+      <button onclick="respond('brand')">What brands do you have</button>
+      <button onclick="respond('about')">About Products</button>
+      <button onclick="respond('delivery')">Do you make deliveries?</button>
+      <button onclick="respond('products')">what do you sell?</button>
+      <button onclick="respond('delivery price')">What is your shipping fee?</button>
+      <button onclick="respond('social media')">Where can i contact you guys?</button>
+      <button onclick="respond('exit')">Exit</button>
+    </div>
+
+    <div id="chat-history"></div>
+
+    <div style="margin-top: 10px;">
+      <input type="text" id="custom-question" placeholder="Ask any question..." />
+      <button id="sendBtn" onclick="handleCustomQuestion()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    // Greet the customer on load
+    window.onload = function () {
+      const chat = document.getElementById("chat-history");
+      chat.innerHTML += `
+        <div class="message">
+          <div class="bot-msg">👋 Hello! Welcome to Angel Store. How can I help you today?</div>
+          <div class="bot-avatar"><img src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" class="avatar" /></div>
+        </div>
+      `;
+    };
+
+    const customFAQs = {
+      "shipping fee": "Shipping is free for orders above ₦20,000. A ₦1,000 flat fee applies to smaller orders.",
+      "delivery time": "We deliver within 1-3 business days depending on your location.",
+      "delivery areas": "We deliver nationwide, with special focus on Lagos, Abuja, and Port Harcourt.",
+      "delivery tracking": "Track your order using the email link sent after purchase.",
+      "payment methods": "We accept credit/debit cards, bank transfers, Opay and Flutterwave.",
+      "how to place an order": "Browse our catalog, add items to your cart, and checkout securely.",
+      "return policy": "You can return items within 7 days if they are unused and in original condition.",
+      "order cancellation": "Orders can be cancelled before shipping. Contact us immediately.",
+      "size guide": "We offer sizes from XS to XXL. Check the size chart on the product page.",
+      "fabric information": "Our clothes are made from cotton, linen, polyester, and more.",
+      "product care": "Hand wash or machine wash on gentle cycle for longer-lasting clothes.",
+      "international delivery": "We currently deliver only within Nigeria.",
+      "customer support": "Email us at support@yourstore.com or call 08030648321.",
+      "promotions": "Visit our homepage or social media for current deals.",
+      "loyalty program": "Earn points every time you shop and redeem for discounts.",
+      "do you restock": "Yes, we restock frequently. You can sign up for restock alerts.",
+      "store location": "Our main office is at Angel Mall, Lekki Phase 1, Lagos.",
+      "opening hours": "Customer service is available Mon–Sat, 9 AM to 6 PM.",
+      "do you sell kids clothes": "Yes! We sell for men, women, and kids.",
+      "can i customize": "Limited custom orders available. Contact us to discuss.",
+      "bulk discount": "Yes. Contact us for large quantity pricing.",
+      "track order": "You'll receive a tracking link once your item ships.",
+      "how to contact": "You can DM us on social media or call 08030648321.",
+      "damaged goods": "You will compensated if any product fails to be delivered or has a flaw if delivered."
+    };
+
+    // Synonym mapping - with explicit synonyms for more coverage
+    const synonyms = {
+      "shipping fee": ["delivery fee", "delivery", "shipping"],
+      "order": ["buy", "purchase", "order placement"],
+      "return policy": ["return", "refund", "return policy"],
+      "payment methods": ["payment", "pay", "paying"],
+      "size guide": ["size", "measurement", "size guide"]
+    };
+
+    function respond(type) {
+      const chat = document.getElementById("chat-history");
+      let question = "";
+      let response = "";
+
+      switch (type) {
+        case "brand":
+          question = "What brands do you have?";
+          response = "We offer trendy and affordable fashion brands for men, women, and kids.";
+          break;
+        case "about":
+          question = "About Products";
+          response = "Our products are made from premium materials for style and comfort.";
+          break;
+        case "delivery":
+          question = "Do you make deliveries?";
+          response = "Absolutely! we make deliveries around lagos";
+          break;
+        case "products":
+          question = "what do you sell?";
+          response = "We sell a variety of fashion brands for all gender.";
+          break;
+        case "delivery price":
+          question = "what is your shipping fee?";
+          response = "It majorly depends on the location and product but for most #500 to #1200.";
+          break;
+        case "social media":
+            question = "Where can i contact you guys?";
+            response = "You can Search us up on all social media platforms or DM 08030648321";
+            break
+        case "exit":
+          question = "Exit";
+          response = "Thank you for chatting with us! Have a great day. 😊";
+          break;
+        default:
+          response = "I'm not sure how to respond to that.";
+      }
+
+      chat.innerHTML += `
+        <div class="message">
+          <div class="user-msg">${question}</div>
+          <div class="user-avatar"><img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="avatar" /></div>
+        </div>
+        <div class="message">
+          <div class="bot-msg">${response}</div>
+          <div class="bot-avatar"><img src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" class="avatar" /></div>
+        </div>
+      `;
+
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function handleCustomQuestion() {
+  const input = document.getElementById("custom-question");
+  let question = input.value.trim().toLowerCase().replace(/[!?.]/g, "");
+  const chat = document.getElementById("chat-history");
+
+  if (question === "") return;
+
+  const greetingInputs = ["hi", "hello", "hey", "good day", "good morning", "good afternoon"];
+  let response = "🤖 I'm not sure about that. Please contact us at support@angelstore.com or 08030648321.";
+
+  // ✅ Greeting check (exact match after cleaning)
+  if (greetingInputs.includes(question)) {
+    response = "👋 Hello there! How can I help you today?";
+  } else {
+    // ✅ Check for synonyms and FAQs
+    for (const key in customFAQs) {
+      const allSynonyms = synonyms[key] || [key];
+      for (let i = 0; i < allSynonyms.length; i++) {
+        if (question.includes(allSynonyms[i].toLowerCase())) {
+          response = customFAQs[key];
+          break;
+        }
+      }
+      if (response !== "🤖 I'm not sure about that. Please contact us at support@angelstore.com or 08030648321.") {
+        break;
+      }
+    }
+  }
+
+  chat.innerHTML += `
+    <div class="message">
+      <div class="user-msg">${input.value}</div>
+      <div class="user-avatar"><img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="avatar" /></div>
+    </div>
+    <div class="message">
+      <div class="bot-msg">${response}</div>
+      <div class="bot-avatar"><img src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" class="avatar" /></div>
+    </div>
+  `;
+
+  input.value = "";
+  chat.scrollTop = chat.scrollHeight;
+}
+
+
+  </script>
+
+</body>
+</html>
